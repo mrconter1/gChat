@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>L'chat</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+	$(document).ready(function(){
+	
+		$(".row").hide()
+		$("#chatInput").focus();
+	
+		$("#chatWindow").height("300px");
+	
+		var reqString = "The following is a transcript of a conversation between two real life average human beings chatting online. No computers or bots are involved:\\n\\n"
+	
+		$('#chatInput').bind("enterKey", function(e){
+		
+			var chatInput = $.trim($('#chatInput').val())
+		
+			//User bubble
+			var chatBubble;
+			if ($('.row').length == 1) {
+				chatBubble = $( '.row:first' )
+				chatBubble.show()
+			} else {
+				chatBubble = $( '.row:first' ).clone()
+			}
+			chatBubble.find( ".container" ).html(chatInput);
+			chatBubble.appendTo( "#chatWindow" )
+			$("#chatWindow").scrollTop($("#chatWindow")[0].scrollHeight);
+		
+			//Responder bubble
+			var chatBubble = $( '.row:first' ).clone()
+			var chatInput = $('#chatInput').val()
+			$('#chatInput').val("")
+			
+			reqString += "A: " + chatInput
+			
+			console.log(reqString)
+			
+			$.ajax({
+				type: "POST",
+				url: "/interact/",
+				data: {prompt: reqString},
+				success: function (result) {
+					console.log(result)
+					res = JSON.parse(result)
+					text = res.choices[0].text
+					parsedText = text.split("B:")[1].split("\n")[0]
+					chatBubble.find( ".container" ).html(parsedText);
+					chatBubble.appendTo( "#chatWindow" )
+					reqString += "\\n\\nB:" + parsedText + "\\n\\n"
+					$("#chatWindow").scrollTop($("#chatWindow")[0].scrollHeight);
+				}
+			})
+			
+		})
+		
+		$('#chatInput').keyup(function(e){
+			if(e.keyCode == 13)
+			{
+				$(this).trigger("enterKey");
+			}
+		})
+	})
+
+</script>
+
+<div class="container w-25 p-4 overflow-auto">
+	<h1 class="display-4">L'chat</h1>
+	<div id="chatWindow" class="container p-3 text-white rounded overflow-auto border border-primary">
+		<div class="row">
+			<div class="col-auto">
+				<div class="container p-2 my-2 bg-primary text-white rounded">
+					Hello!
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="form-group pt-2">
+		<input id="chatInput" type="text" placeholder="Say hello ..." class="form-control" id="usr">
+	</div>
+</div>
+
+</body>
+</html>
